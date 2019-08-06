@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testSet>
+    <passedTransactionsTest>
+        <testName>Failure rate</testName>
+        <description>Verify failure rate does not exceed target rate</description>
+        <transactionName>GET:Common.ExampleController.ExampleRequestA</transactionName>
+        <allowedNumberOfFailedTransactions>0</allowedNumberOfFailedTransactions>
+    </passedTransactionsTest>
+
+    <nthPercRespTimeTest>
+        <testName>Response time percentile</testName>
+        <description>Verify 90th percentile response times do not exceed target</description>
+        <transactionName>GET:Common.ExampleController.ExampleRequestA</transactionName>
+        <percentile>90</percentile>
+        <maxRespTime>500</maxRespTime>
+    </nthPercRespTimeTest>
+</testSet>

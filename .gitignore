@@ -1,0 +1,11 @@
+# IntelliJ artifacts
+.idea/*
+example.iml
+
+# JMeter Maven Plugin artifacts
+lightning-jenkins.properties
+
+*.in.jmx
+
+# Output files from the Maven build process
+target/*

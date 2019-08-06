@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>burtoni.jmeter.examples</groupId>
+    <artifactId>sample-unittest</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <profiles>
+        <!-- Benchmark Test -->
+        <profile>
+            <id>profile.benchmarkTest</id>
+            <activation>
+                <!-- Test will be chosen when property testType is not supplied, i.e. the default -->
+                <property>
+                    <name>!testType</name>
+                </property>
+            </activation>
+            <properties>
+                <testtype></testtype>
+                <isbenchmarktest>true</isbenchmarktest>
+            </properties>
+        </profile>
+        <!-- Load Test -->
+        <profile>
+            <id>profile.loadTest</id>
+            <!-- Test will only be chosen when -DtestType=load -->
+            <activation>
+                <property>
+                    <name>testType</name>
+                    <value>load</value>
+                </property>
+            </activation>
+            <properties>
+                <testtype>-load</testtype>
+                <isbenchmarktest>false</isbenchmarktest>
+            </properties>
+        </profile>
+    </profiles>
+    
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- No need to run deploy lifecycle -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+
+        <!-- No need to create a JAR -->
+        <jar.skipIfEmpty>true</jar.skipIfEmpty>
+        <maven.install.skip>true</maven.install.skip>
+
+        <!-- Specify which JMX to run by default -->
+        <testname>unittest.example</testname>
+        <!-- Run in perftest env unless overridden using -Denv -->
+        <env>perf</env>
+    </properties>
+
+    <repositories>
+    </repositories>
+
+    <build>
+        <plugins>
+            <!-- Since we can't set the XML element jmeterTestPlan.hashTree.TestPlan via the JMeter property, we have to
+                 replace it in the original XML file. Ref https://bz.apache.org/bugzilla/show_bug.cgi?id=61455 and
+                 https://stackoverflow.com/questions/45820455 -->
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <file>${project.basedir}/${testname}.jmx</file>
+                    <outputFile>${project.basedir}/${testname}.in.jmx</outputFile>
+                    <replacements>
+                        <replacement>
+                            <xpath>/jmeterTestPlan/hashTree/TestPlan/boolProp[@name='TestPlan.serialize_threadgroups']/text()</xpath>
+                            <token>^.*$</token>
+                            <value>${isbenchmarktest}</value>
+                        </replacement>
+                    </replacements>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.lazerycode.jmeter</groupId>
+                <artifactId>jmeter-maven-plugin</artifactId>
+                <version>2.8.6</version>
+                <executions>
+                    <execution>
+                        <id>jmeter-tests</id>
+                        <goals>
+                            <goal>jmeter</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jmeterVersion>5.1.1</jmeterVersion>
+                    <!-- JMX file for unittests lives in the same directory as pom.xml -->
+                    <testFilesDirectory>${project.basedir}</testFilesDirectory>
+                    <testFilesIncluded>
+                        <jMeterTestFile>${testname}.in.jmx</jMeterTestFile>
+                    </testFilesIncluded>
+                    <!-- Need to save in CSV format for lightning plugin -->
+                    <resultsFileFormat>csv</resultsFileFormat>
+                    <!-- Don't append timestamp to JTL file, so lightning can find it more easily -->
+                    <testResultsTimestamp>false</testResultsTimestamp>
+                    <!-- Don't stop the test on a failure -->
+                    <ignoreResultFailures>true</ignoreResultFailures>
+                    <propertiesUser>
+                        <env>${env}</env>
+                        <url.application>localhost</url.application>
+                        <unittest.path.resources>${project.basedir}</unittest.path.resources>
+                        <unittest.path.testdata>${project.basedir}/data</unittest.path.testdata>
+                    </propertiesUser>
+                    <!-- Additional output JTL format for lightning plugin -->
+                    <propertiesJMeter>
+                        <jmeter.save.saveservice.print_field_names>true</jmeter.save.saveservice.print_field_names>
+                        <jmeter.save.saveservice.successful>true</jmeter.save.saveservice.successful>
+                        <jmeter.save.saveservice.label>true</jmeter.save.saveservice.label>
+                        <jmeter.save.saveservice.time>true</jmeter.save.saveservice.time>
+                    </propertiesJMeter>
+                    <customPropertiesFiles>
+                        <file>${project.basedir}/${testname}${testtype}.threadgroups.conf</file>
+                    </customPropertiesFiles>
+                    <!-- Additional libraries (mostly) from jmeter-plugins.org -->
+                    <jmeterExtensions>
+                        <!--<artifact>au.com.rockend:timinglistener:0.2-SNAPSHOT</artifact>-->
+                        <artifact>com.google.code.gson:gson:2.8.2</artifact>
+                        <artifact>com.opencsv:opencsv:4.1</artifact>
+                        <!--<artifact>com.sumologic.plugins.log4j:sumologic-log4j2-appender:1.7</artifact>-->
+                        <artifact>kg.apc:jmeter-plugins-dummy:0.2</artifact>
+                    </jmeterExtensions>
+                    <jMeterProcessJVMSettings>
+                        <xms>1024</xms>
+                        <xmx>1024</xmx>
+                        <arguments>
+                            <argument>-Dunittest.path.logs=${project.build.directory}/jmeter/logs</argument>
+                            <argument>-Dunittest.testname=${testname}</argument>
+                            <argument>-Dlog4j.configurationFile=file://${project.basedir}/log4j2.xml</argument>
+                        </arguments>
+                    </jMeterProcessJVMSettings>
+                    <downloadExtensionDependencies>true</downloadExtensionDependencies>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>uk.co.automatictester</groupId>
+                <artifactId>jmeter-lightning-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>lightning</goal>
+                        </goals>
+                        <configuration>
+                            <mode>verify</mode>
+                            <!-- Lightning XML definition file lives in the same directory as pom.xml -->
+                            <testSetXml>${project.basedir}/${testname}${testtype}.xml</testSetXml>
+                            <!-- Test output JTL file written to target/jmeter/results/<testname>.csv -->
+                            <jmeterCsv>${project.build.directory}/jmeter/results/${testname}.in.csv</jmeterCsv>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
