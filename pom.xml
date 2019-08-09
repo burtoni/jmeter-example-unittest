@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>burtoni.jmeter.examples</groupId>
+    <groupId>io.github.burtoni.jmeter-examples</groupId>
     <artifactId>sample-unittest</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -134,10 +134,8 @@
                     </customPropertiesFiles>
                     <!-- Additional libraries (mostly) from jmeter-plugins.org -->
                     <jmeterExtensions>
-                        <!--<artifact>au.com.rockend:timinglistener:0.2-SNAPSHOT</artifact>-->
                         <artifact>com.google.code.gson:gson:2.8.2</artifact>
                         <artifact>com.opencsv:opencsv:4.1</artifact>
-                        <!--<artifact>com.sumologic.plugins.log4j:sumologic-log4j2-appender:1.7</artifact>-->
                         <artifact>kg.apc:jmeter-plugins-dummy:0.2</artifact>
                     </jmeterExtensions>
                     <jMeterProcessJVMSettings>

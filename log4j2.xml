@@ -73,9 +73,11 @@
             <AppenderRef ref="gui-log-event"/>
         </Root>
 
-        <!-- Custom Rockend logging for JMeter. Use additivity=false so the root level appenders don't receive a
-             secondary copy of the log message -->
-        <!-- Logs for the threads activity as it runs over the script -->
+        <!-- Custom logging for JMeter after this point. Use additivity=false so the root level appenders don't
+             receive a secondary copy of the log message -->
+
+        <!-- Logs for the threads activity as it runs over the script. Note we don't have an explicit
+             logger referenced in the code, instead relying on the JSR223Pre and PostProcessors below -->
         <Logger name="JmeterRunLogger" level="debug" additivity="false">
             <AppenderRef ref="JmeterRunlogAppender"/>
         </Logger>
@@ -104,7 +106,7 @@
         </Logger>
 
         <!-- Log any custom plugins -->
-        <Logger name="burtoni.jmeter.examples" level="debug" additivity="false">
+        <Logger name="io.github.burtoni.jmeter.examples" level="debug" additivity="false">
             <AppenderRef ref="JmeterRunlogAppender"/>
         </Logger>
 
